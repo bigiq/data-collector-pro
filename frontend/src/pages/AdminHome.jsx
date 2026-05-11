@@ -5,176 +5,144 @@ import { useNavigate } from 'react-router-dom';
 export default function AdminHome() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('phones'); 
-  
   const [phones, setPhones] = useState([]);
   const [facebook, setFacebook] = useState([]);
-  const [workers, setWorkers] = useState([]); // New state for workers
+  const [workers, setWorkers] = useState([]); 
   
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newName, setNewName] = useState('');
   const [userMsg, setUserMsg] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
-      const phoneRes = await axios.get('https://data-collector-backend.onrender.com/api/phones');
-      const fbRes = await axios.get('https://data-collector-backend.onrender.com/api/facebook');
-      const workerRes = await axios.get('https://data-collector-backend.onrender.com/api/users'); // Fetch workers
-      setPhones(phoneRes.data);
-      setFacebook(fbRes.data);
-      setWorkers(workerRes.data);
-    } catch (error) {
-      console.error("Error fetching data", error);
-    }
+      const [phoneRes, fbRes, workerRes] = await Promise.all([
+        axios.get('https://data-collector-backend.onrender.com/api/phones'),
+        axios.get('https://data-collector-backend.onrender.com/api/facebook'),
+        axios.get('https://data-collector-backend.onrender.com/api/users')
+      ]);
+      setPhones(phoneRes.data); setFacebook(fbRes.data); setWorkers(workerRes.data);
+    } catch (error) { console.error("Error fetching data", error); }
   };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('https://data-collector-backend.onrender.com/api/users', {
-        username: newUsername,
-        password: newPassword,
-        assignedName: newName
-      });
-      setUserMsg("✅ User created successfully!");
+      await axios.post('https://data-collector-backend.onrender.com/api/users', { username: newUsername, password: newPassword, assignedName: newName });
+      setUserMsg("✅ Worker created successfully!");
       setNewUsername(''); setNewPassword(''); setNewName('');
-      fetchData(); // Refresh the list instantly
-    } catch (err) {
-      setUserMsg("❌ " + (err.response?.data?.error || "Error creating user"));
-    }
+      fetchData(); 
+    } catch (err) { setUserMsg("❌ " + (err.response?.data?.error || "Error creating user")); }
   };
 
-  // New Delete Function
-  // for security
   const handleDeleteUser = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete ${name}'s account?`)) return;
-    try {
-      await axios.delete(`https://data-collector-backend.onrender.com/api/users/${id}`);
-      fetchData(); // Refresh the list instantly
-    } catch (error) {
-      alert("Failed to delete user");
-    }
+    try { await axios.delete(`https://data-collector-backend.onrender.com/api/users/${id}`); fetchData(); } 
+    catch (error) { alert("Failed to delete user"); }
   };
 
-  const downloadPhoneCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,Number,Collected By,Date\n";
-    phones.forEach(p => {
-      const date = new Date(p.createdAt).toLocaleDateString();
-      csvContent += `="${p.number}",${p.addedByName},${date}\n`;
+  const downloadCSV = (data, filename, type) => {
+    let csvContent = `data:text/csv;charset=utf-8,${type},Collected By,Date\n`;
+    data.forEach(item => {
+      const date = new Date(item.createdAt).toLocaleDateString();
+      const val = type === 'Number' ? `="${item.number}"` : item.link;
+      csvContent += `${val},${item.addedByName},${date}\n`;
     });
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "collected_phones.csv");
+    link.href = encodeURI(csvContent);
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
   };
 
-  const downloadFacebookCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,Facebook Link,Collected By,Date\n";
-    facebook.forEach(fb => {
-      const date = new Date(fb.createdAt).toLocaleDateString();
-      csvContent += `${fb.link},${fb.addedByName},${date}\n`;
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "collected_facebook_links.csv");
-    document.body.appendChild(link);
-    link.click();
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/');
-  };
+  const handleLogout = () => { localStorage.clear(); navigate('/'); };
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-6">
-      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-sm">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Master Dashboard</h1>
-        <button onClick={handleLogout} className="text-red-500 font-bold hover:underline">Log Out</button>
+    <div className="max-w-7xl mx-auto mt-10 p-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white">
+        <div className="flex items-center">
+          <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl font-bold mr-4 shadow-lg shadow-indigo-200">A</div>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Master Dashboard</h1>
+        </div>
+        <button onClick={handleLogout} className="mt-4 md:mt-0 px-6 py-2 bg-red-50 text-red-600 font-bold rounded-full hover:bg-red-100 hover:text-red-700 transition-colors">
+          Log Out
+        </button>
       </div>
 
-      <div className="flex space-x-4 mb-6">
-        <button onClick={() => setActiveTab('phones')} className={`px-4 py-2 rounded font-bold ${activeTab === 'phones' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 shadow'}`}>Phones ({phones.length})</button>
-        <button onClick={() => setActiveTab('facebook')} className={`px-4 py-2 rounded font-bold ${activeTab === 'facebook' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 shadow'}`}>Facebook ({facebook.length})</button>
-        <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded font-bold ${activeTab === 'users' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 shadow'}`}>Manage Workers ({workers.length})</button>
+      {/* 💅 UI UPGRADE: Pill-shaped elegant tabs */}
+      <div className="flex space-x-2 mb-8 bg-white/50 backdrop-blur-sm p-2 rounded-2xl w-fit border border-white shadow-sm">
+        <button onClick={() => setActiveTab('phones')} className={`px-6 py-3 rounded-xl font-bold transition-all ${activeTab === 'phones' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}>Phones ({phones.length})</button>
+        <button onClick={() => setActiveTab('facebook')} className={`px-6 py-3 rounded-xl font-bold transition-all ${activeTab === 'facebook' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}>Facebook ({facebook.length})</button>
+        <button onClick={() => setActiveTab('users')} className={`px-6 py-3 rounded-xl font-bold transition-all ${activeTab === 'users' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}>Manage Workers</button>
       </div>
 
-      {activeTab === 'phones' && (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Collected Phone Numbers</h2>
-            <button onClick={downloadPhoneCSV} className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Download CSV</button>
+      {/* 💅 UI UPGRADE: Beautiful soft tables */}
+      {(activeTab === 'phones' || activeTab === 'facebook') && (
+        <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-extrabold text-slate-800">Collected Data</h2>
+            <button onClick={() => downloadCSV(activeTab === 'phones' ? phones : facebook, `collected_${activeTab}.csv`, activeTab === 'phones' ? 'Number' : 'Facebook Link')} 
+              className="bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30 transform hover:-translate-y-0.5 transition-all flex items-center">
+              <span className="mr-2">📥</span> Download CSV
+            </button>
           </div>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-100"><th className="p-3 border-b">Number</th><th className="p-3 border-b">Collected By</th><th className="p-3 border-b">Date</th></tr>
-            </thead>
-            <tbody>
-              {phones.map((p, index) => (
-                <tr key={index} className="hover:bg-gray-50"><td className="p-3 border-b font-mono">{p.number}</td><td className="p-3 border-b">{p.addedByName}</td><td className="p-3 border-b text-sm text-gray-500">{new Date(p.createdAt).toLocaleDateString()}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === 'facebook' && (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Collected Facebook Links</h2>
-            <button onClick={downloadFacebookCSV} className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Download CSV</button>
-          </div>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-100"><th className="p-3 border-b">Link</th><th className="p-3 border-b">Collected By</th><th className="p-3 border-b">Date</th></tr>
-            </thead>
-            <tbody>
-              {facebook.map((fb, index) => (
-                <tr key={index} className="hover:bg-gray-50"><td className="p-3 border-b text-blue-500 hover:underline"><a href={fb.link} target="_blank" rel="noreferrer">{fb.link}</a></td><td className="p-3 border-b">{fb.addedByName}</td><td className="p-3 border-b text-sm text-gray-500">{new Date(fb.createdAt).toLocaleDateString()}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* NEW: Upgraded Worker Management Tab */}
-      {activeTab === 'users' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-bold mb-4">Current Workers</h2>
+          <div className="overflow-hidden rounded-2xl border border-slate-100">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-100"><th className="p-3 border-b">Name</th><th className="p-3 border-b">Username</th><th className="p-3 border-b">Action</th></tr>
+                <tr className="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider">
+                  <th className="p-5 font-bold">{activeTab === 'phones' ? 'Phone Number' : 'Facebook Link'}</th>
+                  <th className="p-5 font-bold">Collected By</th>
+                  <th className="p-5 font-bold">Date</th>
+                </tr>
               </thead>
-              <tbody>
-                {workers.map((w, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="p-3 border-b font-semibold">{w.assignedName}</td>
-                    <td className="p-3 border-b text-gray-600">{w.username}</td>
-                    <td className="p-3 border-b">
-                      <button onClick={() => handleDeleteUser(w._id, w.assignedName)} className="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-2 py-1 rounded">Delete</button>
+              <tbody className="divide-y divide-slate-100">
+                {(activeTab === 'phones' ? phones : facebook).map((item, index) => (
+                  <tr key={index} className="hover:bg-indigo-50/50 transition-colors bg-white">
+                    <td className="p-5 font-mono text-slate-700">{activeTab === 'phones' ? item.number : <a href={item.link} target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline">{item.link}</a>}</td>
+                    <td className="p-5 font-semibold text-slate-700">
+                      <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-sm">{item.addedByName}</span>
                     </td>
+                    <td className="p-5 text-sm text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
 
-          <div className="bg-white p-6 rounded-lg shadow h-fit">
-            <h2 className="text-xl font-bold mb-4">Create New Worker</h2>
-            {userMsg && <div className="mb-4 font-bold text-blue-600">{userMsg}</div>}
+      {activeTab === 'users' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white">
+            <h2 className="text-2xl font-extrabold text-slate-800 mb-8">Active Team</h2>
+            <div className="overflow-hidden rounded-2xl border border-slate-100">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider"><th className="p-5 font-bold">Name</th><th className="p-5 font-bold">Username</th><th className="p-5 font-bold text-right">Action</th></tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {workers.map((w, index) => (
+                    <tr key={index} className="bg-white hover:bg-slate-50 transition-colors">
+                      <td className="p-5 font-bold text-slate-800 flex items-center"><div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3 text-xs">{w.assignedName.charAt(0)}</div>{w.assignedName}</td>
+                      <td className="p-5 font-mono text-slate-500">{w.username}</td>
+                      <td className="p-5 text-right"><button onClick={() => handleDeleteUser(w._id, w.assignedName)} className="text-red-500 hover:text-white hover:bg-red-500 font-bold text-sm bg-red-50 px-4 py-2 rounded-xl transition-colors">Remove</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white h-fit">
+            <h2 className="text-2xl font-extrabold text-slate-800 mb-6">Add Worker</h2>
+            {userMsg && <div className="mb-6 p-4 rounded-xl font-bold bg-indigo-50 text-indigo-600 text-sm">{userMsg}</div>}
             <form onSubmit={handleCreateUser} className="space-y-4">
-              <input type="text" placeholder="Actual Name (e.g., John)" value={newName} onChange={e => setNewName(e.target.value)} required className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" />
-              <input type="text" placeholder="Login Username" value={newUsername} onChange={e => setNewUsername(e.target.value)} required className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" />
-              <input type="password" placeholder="Login Password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" />
-              <button type="submit" className="w-full bg-green-600 text-white p-3 rounded font-bold hover:bg-green-700">Create Account</button>
+              <input type="text" placeholder="Actual Name (e.g., John)" value={newName} onChange={e => setNewName(e.target.value)} required className="w-full p-4 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-700" />
+              <input type="text" placeholder="Login Username" value={newUsername} onChange={e => setNewUsername(e.target.value)} required className="w-full p-4 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-700" />
+              <input type="password" placeholder="Login Password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full p-4 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-700" />
+              <button type="submit" className="w-full bg-slate-800 text-white p-4 rounded-xl font-bold hover:bg-slate-900 hover:shadow-lg transition-all mt-2">Create Account</button>
             </form>
           </div>
         </div>
