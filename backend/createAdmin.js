@@ -9,18 +9,18 @@ mongoose.connect(process.env.MONGO_URI)
     console.log("✅ Database connected.");
 
     // Check if admin already exists to prevent duplicates
-    const existingAdmin = await User.findOne({ username: 'admin' });
+    const existingAdmin = await User.findOne({ username: 'dataadmin' });
     if (existingAdmin) {
       console.log("⚠️ Admin already exists!");
       process.exit();
     }
 
     // Hash the password for security
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash('dataCollect2024', 10);
 
     // Create the Admin User
     const adminUser = new User({
-      username: 'admin',
+      username: 'dataadmin',
       password: hashedPassword,
       role: 'admin',
       assignedName: 'Wasib (Admin)'
@@ -28,8 +28,8 @@ mongoose.connect(process.env.MONGO_URI)
 
     await adminUser.save();
     console.log("🎉 Admin account created successfully!");
-    console.log("Username: admin");
-    console.log("Password: admin123");
+    console.log("Username: dataadmin");
+    console.log("Password: dataCollect2024");
     process.exit();
   })
   .catch(err => {

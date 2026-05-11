@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import UserHome from './pages/UserHome';
 import AddData from './pages/AddData';
@@ -6,7 +6,7 @@ import AdminHome from './pages/AdminHome';
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <div className="min-h-screen bg-gray-100 text-gray-800 font-sans">
         <Routes>
           <Route path="/" element={<Login />} />
@@ -16,7 +16,7 @@ function App() {
           <Route path="/admin-home" element={<AdminHome />} />
         </Routes>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
