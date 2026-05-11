@@ -18,7 +18,7 @@ export default function UserHome() {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     try {
-      await axios.put('http://localhost:5000/api/users/password', { userId, newPassword });
+      await axios.put('https://data-collector-backend.onrender.com/api/users/password', { userId, newPassword });
       setPwdMsg("✅ Password updated successfully!");
       setNewPassword('');
     } catch (err) {

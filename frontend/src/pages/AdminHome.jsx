@@ -21,9 +21,9 @@ export default function AdminHome() {
 
   const fetchData = async () => {
     try {
-      const phoneRes = await axios.get('http://localhost:5000/api/phones');
-      const fbRes = await axios.get('http://localhost:5000/api/facebook');
-      const workerRes = await axios.get('http://localhost:5000/api/users'); // Fetch workers
+      const phoneRes = await axios.get('https://data-collector-backend.onrender.com/api/phones');
+      const fbRes = await axios.get('https://data-collector-backend.onrender.com/api/facebook');
+      const workerRes = await axios.get('https://data-collector-backend.onrender.com/api/users'); // Fetch workers
       setPhones(phoneRes.data);
       setFacebook(fbRes.data);
       setWorkers(workerRes.data);
@@ -35,7 +35,7 @@ export default function AdminHome() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/users', {
+      await axios.post('https://data-collector-backend.onrender.com/api/users', {
         username: newUsername,
         password: newPassword,
         assignedName: newName
@@ -52,7 +52,7 @@ export default function AdminHome() {
   const handleDeleteUser = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete ${name}'s account?`)) return;
     try {
-      await axios.delete(`http://localhost:5000/api/users/${id}`);
+      await axios.delete(`https://data-collector-backend.onrender.com/api/users/${id}`);
       fetchData(); // Refresh the list instantly
     } catch (error) {
       alert("Failed to delete user");

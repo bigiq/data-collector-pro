@@ -12,7 +12,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/login', { username, password });
+      const res = await axios.post('https://data-collector-backend.onrender.com/api/login', { username, password });
       
       // Save user details to browser memory
       localStorage.setItem('token', res.data.token);

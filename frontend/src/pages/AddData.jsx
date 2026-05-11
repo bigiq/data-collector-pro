@@ -26,7 +26,7 @@ export default function AddData({ type }) {
       : { link: inputValue, userId, userName };
 
     try {
-      const res = await axios.post(`http://localhost:5000${endpoint}`, payload);
+      const res = await axios.post(`https://data-collector-backend.onrender.com${endpoint}`, payload);
       setMessage(res.data.message);
       setIsError(false);
       setInputValue(''); // Clear input for the next entry
