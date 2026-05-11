@@ -49,6 +49,7 @@ export default function AdminHome() {
   };
 
   // New Delete Function
+  // for security
   const handleDeleteUser = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete ${name}'s account?`)) return;
     try {
